@@ -1,0 +1,837 @@
+#include <FEHLCD.h>
+#include <FEHIO.h>
+#include <FEHUtility.h>
+#include <FEHRandom.h>
+#include <string.h>
+
+/* class for make numerical functions for player and dealer */
+class Numerical
+{
+public:
+    int makeNumericalDealer(char inpStr[]);
+    int makeNumericalPlayer(char inpStr[]);
+private:
+    int num;
+    int x;
+};
+
+/* Function prototype for calculatePositivity */
+float calculatePositivity(char inpStr[52][20]);
+
+int main(){
+    LCD.Clear();
+
+/* Have start menu working before and after game is played */
+    int n = 0, wins = 0, losses = 0;
+    /* Welcome Player to Game */
+    LCD.Clear();
+    LCD.WriteLine("Welcome to Blackjack! ... but not really.");
+    Sleep(2.0);
+    /* Define Start Menu Icon Array */
+    FEHIcon::Icon startMenuLabels[4];
+    /* Create buttons for start menu */
+    char startMenuLabelsOptions[4][20] = {"Play Game", "Rules", "Statistics", "Credits"};
+    /* Draw start menu labels */
+    LCD.Clear();
+    FEHIcon::DrawIconArray(startMenuLabels, 2, 2, 10, 10, 5, 5, startMenuLabelsOptions, SCARLET, WHITE);
+    Sleep(1.0);
+    do {
+        n = 0;
+
+        float x, y, bet;
+        LCD.SetFontColor(FEHLCD::White);
+
+        /* make a variable that will start/stop while loop */
+        int i = 1;
+            LCD.Touch(&x,&y);
+            /* if statement for each bet button option */
+            if (startMenuLabels[0].Pressed(x,y,0))
+            {
+                LCD.Clear();
+                /* Define starting money */
+                float money = 100.00;
+                /* GAMEPLAY INPUT */
+                /* Play the game round after round using while loop while user decides not to quit */
+                    int q;
+                    do {
+                    /* Define cards in full deck array */
+                    char deckFull[52][20] = {"Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace"};
+                    /* Define cards in deck array */
+                    char deck[52][20] = {"Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace"};
+                    /* Define cards in empty deck array */
+                    char deckEmpty[52][20] = {"Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero", "Zero"};
+
+                    /* Count number of cards left in deck */
+                    int b, cardsInDeck = 52;
+                    for (b==0;b<52;b++) {
+                        if (strcmp(deck[b], "Zero") == 0) {
+                            cardsInDeck = cardsInDeck - 1;
+                        };
+                    }
+                    /* Replace empty deck with full deck if it has 10 or less cards */
+                    if (cardsInDeck <= 10) {
+                        for (b==0;b<52;b++) {
+                            strcpy(deck[b], deckFull[b]);
+                        }
+                    };
+
+                    /* Display how much money the user still has */
+                    LCD.Write("You have $");
+                    LCD.WriteLine(money);
+                    Sleep(3.0);
+
+                    /* Define Bet Icon Array */
+                    FEHIcon::Icon betLabels[4];
+                    /* Create buttons for Bet */
+                    char betLabelsOptions[4][20] = {"$5", "$10", "$50", "All Money"};
+                    /* Draw bet labels */
+                    LCD.Clear();
+                    FEHIcon::DrawIconArray(betLabels, 2, 2, 10, 10, 5, 5, betLabelsOptions, SCARLET, WHITE);
+                    Sleep(1.0);
+
+                    float x, y, bet;
+                    LCD.SetFontColor(FEHLCD::White);
+
+                    /* make a variable that will start/stop while loop */
+                    int i = 1;
+                    while(i == 1){
+                        LCD.Touch(&x,&y);
+                        /* if statement for each bet button option */
+                        if (betLabels[0].Pressed(x,y,0))
+                        {
+                            bet = 5.00;
+                            LCD.Clear();
+                            i = 0;
+                        }
+                        else if (betLabels[1].Pressed(x,y,0))
+                        {
+                            bet = 10.00;
+                            LCD.Clear();
+                            i = 0;
+                        }
+                        else if (betLabels[2].Pressed(x,y,0))
+                        {
+                            bet = 50.00;
+                            LCD.Clear();
+                            i = 0;
+                        }
+                        else if (betLabels[3].Pressed(x,y,0))
+                        {
+                            bet = money;
+                            LCD.Clear();
+                            i = 0;
+                        }
+                    }
+
+                    /* DEALING FIRST 2 Player CARDS */
+                    /* Declare variables */
+                    int randomCard, randomNumber;
+                    char playerCard1[20], playerCard2[20], playerCardHit[20];
+                    /* Generate a random number that will correspond to the location in the deck array of the card that will be dealt */
+                    randomNumber = Random.RandInt();
+                    /* Convert random number from 0 to 32767 to a random number from 0 to 51 */
+                    randomCard = randomNumber%52;
+                    /* deal card in array that corresponds to randomly generated number */
+                    strcpy(playerCard1, deck[randomCard]);
+                    /* Replace value of dealt card with a 'zero' to "remove" the card from the deck */
+                    strcpy(deck[randomCard], "Zero");
+                    /* Repeat for second dealt card */
+                    randomNumber = Random.RandInt();
+                    randomCard = randomNumber%52;
+                    strcpy(playerCard2, deck[randomCard]);
+                    strcpy(deck[randomCard], "Zero");
+
+                    /* DEALING FIRST 2 DEALER CARDS */
+                    /* Initialize variables */
+                    char dealerCard1[20], dealerCard2[20], dealerCardHit[20];
+                    /* Generate a random number that will correspond to the location in the deck array of the card that will be dealt */
+                    randomNumber = Random.RandInt();
+                    /* Convert random number from 0 to 32767 to a random number from 0 to 51 */
+                    randomCard = randomNumber%52;
+                    /* deal card in array that corresponds to randomly generated number */
+                    strcpy(dealerCard1, deck[randomCard]);
+                    /* Replace value of dealt card with a 'zero' to "remove" the card from the deck */
+                    strcpy(deck[randomCard], "Zero");
+                    /* Repeat for second dealt card */
+                    randomNumber = Random.RandInt();
+                    randomCard = randomNumber%52;
+                    strcpy(dealerCard2, deck[randomCard]);
+                    strcpy(deck[randomCard], "Zero");
+
+                    /* Tell the player what cards they were dealt */
+                    LCD.Write("You were dealt a ");
+                    LCD.Write(playerCard1);
+                    LCD.Write(" and a ");
+                    LCD.Write(playerCard2);
+                    LCD.WriteLine(".");
+                    Sleep(2.0);
+                    /* Tell the player one of the cards the dealer was dealt */
+                    LCD.WriteLine("The dealer was dealt two cards. ");
+                    LCD.WriteLine("The second card the dealer was dealt was a ");
+                    LCD.Write(dealerCard2);
+                    LCD.WriteLine(".");
+                    Sleep(2.0);
+
+                    /* Calculate Positivity of deck */
+                    float positivity;
+                    positivity = calculatePositivity(deck);
+                    /* Tell player positivity of deck */
+                    if (positivity > 10) {
+                        LCD.WriteLine("The deck is very positive");
+                    }
+                    else if (positivity > 6 && positivity <= 10) {
+                        LCD.WriteLine("The deck is positive");
+                    }
+                    else if (positivity > 3 && positivity <= 6) {
+                        LCD.WriteLine("The deck is slightly positive");
+                    }
+                    else if (positivity < -3 && positivity >= -6) {
+                        LCD.WriteLine("The deck is slightly negative");
+                    }
+                    else if (positivity < -6 && positivity >= -10) {
+                        LCD.WriteLine("The deck is negative");
+                    }
+                    else if (positivity < -10) {
+                        LCD.WriteLine("The deck is very negative");
+                    }
+                    else {
+                        LCD.WriteLine("The deck is neutral");
+                    }
+                    Sleep(3.0);
+
+                    /* class instances for player and dealer */
+                    Numerical player;
+                    Numerical dealer;
+
+                    /* Call makeNumerical function for player cards 1 and 2 */
+                    int playerValue, playerValuePlaceHolder, playerCardValue1, playerCardValue2, playerCardHitValue;
+                    playerCardValue1 = player.makeNumericalPlayer(playerCard1);
+                    playerCardValue2 = player.makeNumericalPlayer(playerCard2);
+                    /* Call makeNumerical function for dealer cards 1 and 2 */
+                    int dealerCardValue1, dealerCardValue2, dealerCardHitValue, dealerValue;
+                    dealerCardValue1 = dealer.makeNumericalDealer(dealerCard1);
+                    dealerCardValue2 = dealer.makeNumericalDealer(dealerCard2);
+                    Sleep(5.0);
+                    LCD.Clear();
+
+                    /* Calculate total value of cards and determine if it is below, equal to, or above 21. Display total value of player cards. */
+                    dealerValue = dealerCardValue1 + dealerCardValue2;
+                    playerValue = playerCardValue1 + playerCardValue2;
+                    LCD.Write("The total value of your cards is ");
+                    LCD.Write(playerValue);
+                    LCD.WriteLine(".");
+                    Sleep(5.0);
+                    LCD.Clear();
+
+                    /* If playerValue is less than 21, use while loop to continue round and give player option to hit or stay */
+                    while (playerValue < 21) {
+                        playerValuePlaceHolder = playerValue;
+                        LCD.WriteLine("You are still under 21. Would you like to hit or stay?");
+                        /* define hit button array */
+                        FEHIcon::Icon hitLabels[3];
+                        /* Create buttons for hit array */
+                        char hitLabelsOptions[3][20] = {"Hit", "Stay", "DD"};
+                        /* draw hit labels */
+                        LCD.Clear();
+                        FEHIcon::DrawIconArray(hitLabels, 1, 3, 10, 10, 5, 5, hitLabelsOptions, SCARLET, WHITE);
+                        Sleep(1.0);
+                        /* make a variable that will start/stop another while loop */
+                        int j = 1;
+                        while(j == 1){
+                            LCD.Touch(&x,&y);
+                            /* if statement for hit and stay button options */
+                            /* If hit is selected */
+                            if (hitLabels[0].Pressed(x,y,0))
+                            {
+                                LCD.Clear();
+                                /* deal another unique card */
+                                int z;
+                                z = 0;
+                                while (z == 0) {
+                                /* Generate a random number that will correspond to the location in the deck array of the card that will be dealt */
+                                randomNumber = Random.RandInt();
+                                /* Convert random number from 0 to 32767 to a random number from 0 to 51 */
+                                randomCard = randomNumber%52;
+                                /* deal card in array that corresponds to randomly generated number */
+                                strcpy(playerCardHit, deck[randomCard]);
+                                if (strcmp(playerCardHit, "Zero") == 0) {
+                                    z = 0;
+                                }
+                                else {
+                                    z = 1;
+                                };
+                                }
+                                /* Tell player what they were dealt */
+                                LCD.Write("You were dealt a ");
+                                LCD.Write(playerCardHit);
+                                LCD.WriteLine(".");
+                                Sleep(3.0);
+                                /* Replace value of dealt card with a 'zero' to "remove" the card from the deck */
+                                strcpy(deck[randomCard], "Zero");
+
+                                /* Call makeNumerical Function for playerCardHit */
+                                playerCardHitValue = player.makeNumericalPlayer(playerCardHit);
+                                /* Calculate new total playerValue */
+                                playerValue = playerValue + playerCardHitValue;
+                                /* Adjust playerValuePlaceHolder */
+                                playerValuePlaceHolder = playerValue;
+                                /* Tell player the total value of their cards */
+                                LCD.Write("The total value of your cards is ");
+                                LCD.Write(playerValue);
+                                LCD.WriteLine(".");
+                                Sleep(3.0);
+
+                                /* Clear screen and set j equal to 0 to end this while loop */
+                                LCD.Clear();
+                                j = 0;
+                            }
+                            /* If stay is selected */
+                            else if (hitLabels[1].Pressed(x,y,0))
+                            {
+                                /* set player value above 21 to break initial while loop and move on with the game */
+                                playerValue = 25;
+                                /* Clear screen and set j equal to 0 to end this while loop */
+                                LCD.Clear();
+                                j = 0;
+                            }
+                            /* If double down is selected */
+                            else if (hitLabels[2].Pressed(x,y,0)) {
+                               /* Clear screen */
+                               LCD.Clear();
+                               LCD.WriteLine("Your bet was doubled and you will be dealt one final card.");
+                               LCD.Clear();
+                               /* Bet is doubled */
+                               bet = bet*2;
+                               /* Deal one more card */
+                               int z;
+                               z = 0;
+                               while (z == 0) {
+                               /* Generate a random number that will correspond to the location in the deck array of the card that will be dealt */
+                               randomNumber = Random.RandInt();
+                               /* Convert random number from 0 to 32767 to a random number from 0 to 51 */
+                               randomCard = randomNumber%52;
+                               /* deal card in array that corresponds to randomly generated number */
+                               strcpy(playerCardHit, deck[randomCard]);
+                               if (strcmp(playerCardHit, "Zero") == 0) {
+                                   z = 0;
+                               }
+                               else {
+                                   z = 1;
+                               };
+                               }
+                               /* Tell player what they were dealt */
+                               LCD.Write("You were dealt a ");
+                               LCD.Write(playerCardHit);
+                               LCD.WriteLine(".");
+                               Sleep(3.0);
+                               /* Replace value of dealt card with a 'zero' to "remove" the card from the deck */
+                               strcpy(deck[randomCard], "Zero");
+
+                               /* Call makeNumerical Function for playerCardHit */
+                               playerCardHitValue = player.makeNumericalPlayer(playerCardHit);
+                               /* Calculate new total playerValue */
+                               playerValue = playerValue + playerCardHitValue;
+                               /* Adjust playerValuePlaceHolder */
+                               playerValuePlaceHolder = playerValue;
+                               /* Tell player the total value of their cards */
+                               LCD.Write("The total value of your cards is ");
+                               LCD.Write(playerValue);
+                               LCD.WriteLine(".");
+                               Sleep(3.0);
+
+                               /* Clear screen and set j equal to 0 to end this while loop */
+                               LCD.Clear();
+                               j = 0;
+
+                               /* Momemtarily make player value greater than 21 so that the player cannot hit any more */
+                               playerValue = 25;
+                            }
+                        }
+                    }
+                    /* set playerValue equal to its place holder */
+                    playerValue = playerValuePlaceHolder;
+
+                    /* Have the dealer keep taking cards until their total value is above 21, but only if the player hasn't gone over 21 already */
+                    if (playerValue < 21) {
+                        int z = 0;
+                        while (dealerValue < 17) {
+                            /* Deal a unique card */
+                            while (z == 0) {
+                            /* Generate a random number that will correspond to the location in the deck array of the card that will be dealt */
+                            randomNumber = Random.RandInt();
+                            /* Convert random number from 0 to 32767 to a random number from 0 to 51 */
+                            randomCard = randomNumber%52;
+                            /* deal card in array that corresponds to randomly generated number */
+                            strcpy(dealerCardHit, deck[randomCard]);
+                            if (strcmp(dealerCardHit, "Zero") == 0) {
+                                z = 0;
+                            }
+                            else {
+                                z = 1;
+                            };
+                            }
+                            /* Replace value of dealt card with a 'zero' to "remove" the card from the deck */
+                            strcpy(deck[randomCard], "Zero");
+                            /* call makeNumerical funtion for dealerCardHit */
+                            dealerCardHitValue = dealer.makeNumericalDealer(dealerCardHit);
+                            /* add dealerCardHitValue to dealerValue */
+                            dealerValue = dealerValue + dealerCardHitValue;
+                            LCD.Write("The dealer hit and was dealt a ");
+                            LCD.Write(dealerCardHit);
+                            LCD.WriteLine(".");
+                            Sleep(3.0);
+                        }
+                    };
+
+                    /* Tell the player the total value of the dealer's cards */
+                    LCD.Write("The total value of the dealer's cards is ");
+                    LCD.Write(dealerValue);
+                    LCD.WriteLine(".");
+                    Sleep(3.0);
+
+                    /* Initialize win variable to keep track if the player won or lost the game */
+                    int win;
+                    /* if equal to 21, player wins */
+                    if (playerValue == 21) {
+                        LCD.WriteLine("You Win!");
+                        win = 1;
+                    }
+                    /* If greater than 21, player loses */
+                    else if (playerValue > 21) {
+                        LCD.WriteLine("You went over 21. You lose.");
+                        win = 0;
+                    }
+                    /* If player less than 21, dealer less than 21, and player greater than dealer, player wins */
+                    else if (playerValue < 21 && dealerValue < 21 && playerValue > dealerValue) {
+                        LCD.WriteLine("You Win!");
+                        win = 1;
+                    }
+                    /* If player less than 21 and dealer greater than 21, player wins */
+                    else if (playerValue < 21 && dealerValue > 21) {
+                        LCD.WriteLine("You Win!");
+                        win = 1;
+                    }
+                    /* In all other possible scenarios, player loses */
+                    else {
+                        LCD.WriteLine("The dealer did better than you. You lose.");
+                        win = 0;
+                    };
+
+                    /* set up if statement for when player wins and loses that results in them winning their bet or losing it */
+                    if (win == 1) {
+                        money = money + bet;
+                        wins = wins + 1;
+                    }
+                    else if (win == 0) {
+                        money = money - bet;
+                        losses = losses + 1;
+                    };
+
+                    /* If the player has 0 money, end the game and display a phrase telling the player the game is over and why it is over */
+                    if (money == 0) {
+                        LCD.WriteLine("You have lost all your money.");
+                        LCD.WriteLine("The casino won.");
+                        LCD.WriteLine("Now, you have even less money to pay off your student loans.");
+                        LCD.WriteLine("GAME OVER");
+                        /* Set q = 0 to return the player to the start menu */
+                        q = 0;
+                    };
+
+                    /* Create two new buttons for quit and play another round */
+                    /* define quit button array */
+                    FEHIcon::Icon quitLabels[2];
+                    /* Create buttons for quit array */
+                    char quitLabelsOptions[2][20] = {"Play Again", "Quit"};
+
+                    /* Don't move on until player selects whether to quit or play again */
+                    int e;
+                    e = 0;
+                    LCD.Clear();
+                    FEHIcon::DrawIconArray(quitLabels, 1, 2, 10, 10, 5, 5, quitLabelsOptions, SCARLET, WHITE);
+                    // Aidan told me to do this
+                    for (;e==0;) {
+                        /* draw quit labels */
+                        /* let player push buttons */
+                        LCD.Touch(&x,&y);
+                        /* if statement for quit and play again button options */
+                        if (quitLabels[0].Pressed(x,y,0))
+                        {
+                            LCD.Clear();
+                            q = 0;
+                            e = 1;
+                        }
+                        else if (quitLabels[1].Pressed(x,y,0)) {
+                            LCD.Clear();
+                            /* Set q = 1 and kill while loop that runs rounds of game */
+                            q = 1;
+                            e = 1;
+                            /* Welcome Player to Game */
+                            LCD.Clear();
+                            LCD.WriteLine("Welcome to Blackjack! ... but not really.");
+                            /* Define Start Menu Icon Array */
+                            FEHIcon::Icon startMenuLabels[4];
+                            /* Create buttons for start menu */
+                            char startMenuLabelsOptions[4][20] = {"Play Game", "Rules", "Statistics", "Credits"};
+                            /* Draw start menu labels */
+                            LCD.Clear();
+                            FEHIcon::DrawIconArray(startMenuLabels, 2, 2, 10, 10, 5, 5, startMenuLabelsOptions, SCARLET, WHITE);
+                            Sleep(1.0);
+                        }
+                    }
+
+                } while (q == 0);
+            }
+            else if (startMenuLabels[1].Pressed(x,y,0))
+            {
+                LCD.Clear();
+                LCD.WriteLine("Player closest to 21 without going over wins.");
+                LCD.WriteLine("After the game starts: ");
+                LCD.WriteLine("Select how much money you wish to bet.");
+                LCD.WriteLine("Tap the 'Hit' button to get another card.");
+                LCD.WriteLine("Tap the 'Stay' button to stay");
+                LCD.WriteLine("Tap the 'Quit' button to quit the game");
+                LCD.WriteLine("You start with $100.00");
+                Sleep(10.0);
+                /* Welcome Player to Game */
+                LCD.Clear();
+                LCD.WriteLine("Welcome to Blackjack! ... but not really.");
+                /* Define Start Menu Icon Array */
+                FEHIcon::Icon startMenuLabels[4];
+                /* Create buttons for start menu */
+                char startMenuLabelsOptions[4][20] = {"Play Game", "Rules", "Statistics", "Credits"};
+                /* Draw start menu labels */
+                LCD.Clear();
+                FEHIcon::DrawIconArray(startMenuLabels, 2, 2, 10, 10, 5, 5, startMenuLabelsOptions, SCARLET, WHITE);
+                Sleep(1.0);
+
+            }
+            else if (startMenuLabels[2].Pressed(x,y,0))
+            {
+                LCD.Clear();
+                LCD.Write("Hands Won: ");
+                LCD.WriteLine(wins);
+                LCD.WriteLine(" ");
+                LCD.Write("Hands Lost: ");
+                LCD.WriteLine(losses);
+                Sleep(5.0);
+                /* Welcome Player to Game */
+                LCD.Clear();
+                LCD.WriteLine("Welcome to Blackjack! ... but not really.");
+                /* Define Start Menu Icon Array */
+                FEHIcon::Icon startMenuLabels[4];
+                /* Create buttons for start menu */
+                char startMenuLabelsOptions[4][20] = {"Play Game", "Rules", "Statistics", "Credits"};
+                /* Draw start menu labels */
+                LCD.Clear();
+                FEHIcon::DrawIconArray(startMenuLabels, 2, 2, 10, 10, 5, 5, startMenuLabelsOptions, SCARLET, WHITE);
+                Sleep(1.0);
+
+            }
+            else if (startMenuLabels[3].Pressed(x,y,0))
+            {
+                LCD.Clear();
+                LCD.WriteLine("Everything found in this game comes directly from the genius ingenious minds of: ");
+                LCD.WriteLine("Ryan O'Donnell and Daniela Schmitz");
+                Sleep(5.0);
+                /* Welcome Player to Game */
+                LCD.Clear();
+                LCD.WriteLine("Welcome to Blackjack! ... but not really.");
+                /* Define Start Menu Icon Array */
+                FEHIcon::Icon startMenuLabels[4];
+                /* Create buttons for start menu */
+                char startMenuLabelsOptions[4][20] = {"Play Game", "Rules", "Statistics", "Credits"};
+                /* Draw start menu labels */
+                LCD.Clear();
+                FEHIcon::DrawIconArray(startMenuLabels, 2, 2, 10, 10, 5, 5, startMenuLabelsOptions, SCARLET, WHITE);
+                Sleep(1.0);
+
+            };
+    } while (n == 0);
+    return 0;
+}
+
+/* Function Definition(s) */
+/* makeNumerical function for player's cards */
+int Numerical::makeNumericalPlayer(char inpStr[])
+{
+    /* Initialize Variables */
+    int num;
+    int x;
+    /* A two has a value of 2 */
+    x = strcmp(inpStr,"Two");
+    if (x==0) {
+          num = 2;
+    };
+    /* A three has a value of 3 */
+    x = strcmp(inpStr,"Three");
+    if (x==0) {
+          num = 3;
+    };
+    /* A four has a value of 4 */
+    x = strcmp(inpStr,"Four");
+    if (x==0) {
+          num = 4;
+    };
+    /* A five has a value of 5 */
+    x = strcmp(inpStr,"Five");
+    if (x==0) {
+          num = 5;
+    };
+    /* A six has a value of 6 */
+    x = strcmp(inpStr,"Six");
+    if (x==0) {
+          num = 6;
+    };
+    /* A seven has a value of 7 */
+    x = strcmp(inpStr,"Seven");
+    if (x==0) {
+          num = 7;
+    };
+    /* An eight has a value of 8 */
+    x = strcmp(inpStr,"Eight");
+    if (x==0) {
+          num = 8;
+    };
+    /* A nine has a value of 9 */
+    x = strcmp(inpStr,"Nine");
+    if (x==0) {
+          num = 9;
+    };
+    /* A ten has a value of 10 */
+    x = strcmp(inpStr,"Ten");
+    if (x==0) {
+          num = 10;
+    };
+    /* a jack has a value of 10 */
+    x = strcmp(inpStr,"Jack");
+    if (x==0) {
+          num = 10;
+    };
+    /* a queen has a value of 10 */
+    x = strcmp(inpStr,"Queen");
+    if (x==0) {
+          num = 10;
+    };
+    /* a king has a value of 10 */
+    x = strcmp(inpStr,"King");
+    if (x==0) {
+          num = 10;
+    };
+    /* an ace can have a value of 1 or 11 */
+    x = strcmp(inpStr,"Ace");
+    if (x==0) {
+        LCD.WriteLine("Do you want your ace to be worth 1 or 11?");
+        Sleep(3.0);
+        /* define ace button array */
+        FEHIcon::Icon aceLabels[2];
+        /* Create buttons for quit array */
+        char aceLabelsOptions[2][20] = {"1", "11"};
+        LCD.Clear();
+        FEHIcon::DrawIconArray(aceLabels, 1, 2, 10, 10, 5, 5, aceLabelsOptions, SCARLET, WHITE);
+        /* Let player choose what they want */
+        int e;
+        float x, y;
+        int aceValue;
+        e = 0;
+        // Aidan told me to do this
+        for (;e==0;) {
+            /* let player push buttons */
+            LCD.Touch(&x,&y);
+            /* if statement for quit and play again button options */
+            if (aceLabels[0].Pressed(x,y,0))
+            {
+               LCD.Clear();
+               aceValue = 1;
+               e = 1;
+            }
+            else if (aceLabels[1].Pressed(x,y,0)) {
+                LCD.Clear();
+                /* Set q = 1 and kill while loop that runs rounds of game */
+                aceValue = 11;
+                e = 1;
+            };
+            /* Switch case that sets value of ace */
+            switch (aceValue) {
+            case 1:
+                num = 1;
+                break;
+            case 11:
+                num = 11;
+                break;
+            }
+        }
+    };
+
+    return num;
+}
+
+/* makeNumerical function for dealer's cards */
+int Numerical::makeNumericalDealer(char inpStr[])
+{
+    /* Initialize Variables */
+    int num;
+    int x;
+    /* A two has a value of 2 */
+    x = strcmp(inpStr,"Two");
+    if (x==0) {
+          num = 2;
+    };
+    /* A three has a value of 3 */
+    x = strcmp(inpStr,"Three");
+    if (x==0) {
+          num = 3;
+    };
+    /* A four has a value of 4 */
+    x = strcmp(inpStr,"Four");
+    if (x==0) {
+          num = 4;
+    };
+    /* A five has a value of 5 */
+    x = strcmp(inpStr,"Five");
+    if (x==0) {
+          num = 5;
+    };
+    /* A six has a value of 6 */
+    x = strcmp(inpStr,"Six");
+    if (x==0) {
+          num = 6;
+    };
+    /* A seven has a value of 7 */
+    x = strcmp(inpStr,"Seven");
+    if (x==0) {
+          num = 7;
+    };
+    /* An eight has a value of 8 */
+    x = strcmp(inpStr,"Eight");
+    if (x==0) {
+          num = 8;
+    };
+    /* A nine has a value of 9 */
+    x = strcmp(inpStr,"Nine");
+    if (x==0) {
+          num = 9;
+    };
+    /* A ten has a value of 10 */
+    x = strcmp(inpStr,"Ten");
+    if (x==0) {
+          num = 10;
+    };
+    /* a jack has a value of 10 */
+    x = strcmp(inpStr,"Jack");
+    if (x==0) {
+          num = 10;
+    };
+    /* a queen has a value of 10 */
+    x = strcmp(inpStr,"Queen");
+    if (x==0) {
+          num = 10;
+    };
+    /* a king has a value of 10 */
+    x = strcmp(inpStr,"King");
+    if (x==0) {
+          num = 10;
+    };
+    /* an ace always has a value of 1 for the dealer */
+    x = strcmp(inpStr,"Ace");
+    if (x==0) {
+        num = 1;
+    };
+
+    return num;
+}
+
+/* function that calculates positivity of deck */
+float calculatePositivity(char inpStr[52][20])
+{
+    /* find out how many cards are in the deck, what cards they are, and assign those cards positivity values */
+    int a, positivityCount = 0, num, x;
+    float cardsLeft = 0.0;
+    for (a==0;a<52;a++) {
+    /* a two has a positivity value of 2 */
+    x = strcmp(inpStr[a],"Two");
+    if (x==0) {
+          num = 2;
+          cardsLeft++;
+    };
+    /* a three has a positivity value of 2 */
+    x = strcmp(inpStr[a],"Three");
+    if (x==0) {
+          num = 2;
+          cardsLeft++;
+    };
+    /* a four has a positivity value of 1 */
+    x = strcmp(inpStr[a],"Four");
+    if (x==0) {
+          num = 1;
+          cardsLeft++;
+    };
+    /* a five has a positivity value of 1 */
+    x = strcmp(inpStr[a],"Five");
+    if (x==0) {
+          num = 1;
+          cardsLeft++;
+    };
+    /* a six has a positivity value of 0 */
+    x = strcmp(inpStr[a],"Six");
+    if (x==0) {
+          num = 0;
+          cardsLeft++;
+    };
+    /* a seven has a positivity value of 0 */
+    x = strcmp(inpStr[a],"Seven");
+    if (x==0) {
+          num = 0;
+          cardsLeft++;
+    };
+    /* an eight has a positivity value of 0 */
+    x = strcmp(inpStr[a],"Eight");
+    if (x==0) {
+          num = 0;
+          cardsLeft++;
+    };
+    /* a nine has a positivity value of -1 */
+    x = strcmp(inpStr[a],"Nine");
+    if (x==0) {
+          num = -1;
+          cardsLeft++;
+    };
+    /* a ten has a positivity value of -2 */
+    x = strcmp(inpStr[a],"Ten");
+    if (x==0) {
+          num = -2;
+          cardsLeft++;
+    };
+    /* a jack has a positivity value of -2 */
+    x = strcmp(inpStr[a],"Jack");
+    if (x==0) {
+          num = -2;
+          cardsLeft++;
+    };
+    /* a queen has a positivity value of -2 */
+    x = strcmp(inpStr[a],"Queen");
+    if (x==0) {
+          num = -2;
+          cardsLeft++;
+    };
+    /* a king has a positivity value of -2 */
+    x = strcmp(inpStr[a],"King");
+    if (x==0) {
+          num = -2;
+          cardsLeft++;
+    };
+    /* an ace has a positivity value of 3 */
+    x = strcmp(inpStr[a],"Ace");
+    if (x==0) {
+          num = 3;
+          cardsLeft++;
+    };
+    x = strcmp(inpStr[a], "Zero");
+    if (x == 0) {
+        cardsLeft = cardsLeft + 0;
+    }
+    /* add positivity to positivityCount */
+    positivityCount = positivityCount + num;
+    }
+    positivityCount = positivityCount/cardsLeft;
+    return positivityCount;
+}
